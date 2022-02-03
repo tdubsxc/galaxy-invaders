@@ -1,52 +1,91 @@
-class App {
-  constructor() {
-    this.canvas = document.querySelector('canvas');
-    this.ctx = this.canvas.getContext('2d');
-    this.user = null;
-  }
+(function () {
+  // * Variables
+  const canvas = document.querySelector('canvas');
+  const ctx = canvas.getContext('2d');
+  let player = null;
+  let projectiles = [];
+  let centerX;
+  let centerY;
 
-  init() {
-    this.events();
-  }
+  // * Methods
+  const init = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-  events() {
-    window.addEventListener('DOMContentLoaded', (_e) => {
-      this.setCanvasDimensions();
-      this.createUser();
-    });
-  }
+    centerX = canvas.width / 2;
+    centerY = canvas.height / 2;
 
-  setCanvasDimensions() {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-  }
+    playerSetup();
+  };
 
-  createUser() {
-    const centerX = this.canvas.width / 2;
-    const centerY = this.canvas.height / 2;
+  const playerSetup = (_e) => {
+    player = new Player(centerX, centerY, 25, 'aqua');
+    player.draw(ctx);
+  };
 
-    this.user = new User(centerX, centerY, 25, 'aqua');
-    const { x, y, radius, color } = this.user;
+  const handleProjectiles = (e) => {
+    const distanceX = e.clientX - centerX;
+    const distanceY = e.clientY - centerY;
 
-    this.draw(x, y, radius, color);
-  }
+    const angle = Math.atan2(distanceY, distanceX);
+    const velocity = { x: Math.cos(angle), y: Math.sin(angle) };
 
-  draw(x, y, r, color) {
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, r, 0, Math.PI * 2, false);
-    this.ctx.fillStyle = color;
-    this.ctx.fill();
-  }
-}
+    const projectile = new Projectile(centerX, centerY, 5, 'red', velocity);
 
-class User {
+    projectiles.push(projectile);
+    animate();
+  };
+
+  const animate = () => {
+    const fps = 25;
+
+    setTimeout(() => {
+      requestAnimationFrame(animate);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      player.draw(ctx);
+      projectiles.forEach((projectile) => {
+        projectile.updatePosition(ctx);
+      });
+    }, 1000 / fps);
+  };
+
+  // * Events
+  addEventListener('DOMContentLoaded', init);
+  addEventListener('click', handleProjectiles);
+})();
+
+class Circle {
   constructor(x, y, radius, color) {
     this.x = x;
     this.y = y;
     this.radius = radius;
     this.color = color;
   }
+
+  draw(ctx) {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+  }
 }
 
-const app = new App();
-app.init();
+class Player extends Circle {
+  constructor(x, y, radius, color) {
+    super(x, y, radius, color);
+  }
+}
+
+class Projectile extends Circle {
+  constructor(x, y, radius, color, velocity) {
+    super(x, y, radius, color);
+    this.velocity = velocity;
+  }
+
+  updatePosition(ctx) {
+    this.draw(ctx);
+
+    this.x = this.x + this.velocity.x;
+    this.y = this.y + this.velocity.y;
+  }
+}
