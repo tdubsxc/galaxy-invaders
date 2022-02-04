@@ -2,10 +2,17 @@
   // * Variables
   const canvas = document.querySelector('canvas');
   const ctx = canvas.getContext('2d');
+  const projectiles = [];
+  const enemies = [];
   let player = null;
-  let projectiles = [];
   let centerX;
   let centerY;
+
+  let fps = 200;
+  let now = null;
+  let then = Date.now();
+  let interval = 1000 / fps;
+  let delta = null;
 
   // * Methods
   const init = () => {
@@ -19,7 +26,7 @@
   };
 
   const playerSetup = (_e) => {
-    player = new Player(centerX, centerY, 25, 'aqua');
+    player = new Player(centerX, centerY, 20, 'aqua');
     player.draw(ctx);
   };
 
@@ -33,21 +40,55 @@
     const projectile = new Projectile(centerX, centerY, 5, 'red', velocity);
 
     projectiles.push(projectile);
-    animate();
   };
 
   const animate = () => {
-    const fps = 25;
+    requestAnimationFrame(animate);
 
-    setTimeout(() => {
-      requestAnimationFrame(animate);
+    now = Date.now();
+    delta = now - then;
+
+    if (delta > interval) {
+      then = now - (delta % interval);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       player.draw(ctx);
+
       projectiles.forEach((projectile) => {
         projectile.updatePosition(ctx);
       });
-    }, 1000 / fps);
+
+      enemies.forEach((enemy) => {
+        enemy.updatePosition(ctx);
+      });
+    }
   };
+
+  const spawnEnemies = () => {
+    setInterval(() => {
+      const radius = Math.random() * (25 - 5) + 5;
+      const color = 'purple';
+      let x;
+      let y;
+
+      if (Math.random() < 0.5) {
+        x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius;
+        y = Math.random() * canvas.height;
+      } else {
+        x = Math.random() * canvas.width;
+        y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius;
+      }
+
+      const angle = Math.atan2(centerY - y, centerX - x);
+      const velocity = { x: Math.cos(angle), y: Math.sin(angle) };
+
+      const enemy = new Enemy(x, y, radius, color, velocity);
+
+      enemies.push(enemy);
+    }, 2000);
+  };
+
+  animate();
+  spawnEnemies();
 
   // * Events
   addEventListener('DOMContentLoaded', init);
@@ -84,8 +125,13 @@ class Projectile extends Circle {
 
   updatePosition(ctx) {
     this.draw(ctx);
-
     this.x = this.x + this.velocity.x;
     this.y = this.y + this.velocity.y;
+  }
+}
+
+class Enemy extends Projectile {
+  constructor(x, y, radius, color, velocity) {
+    super(x, y, radius, color, velocity);
   }
 }
