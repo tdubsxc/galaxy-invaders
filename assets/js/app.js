@@ -5,8 +5,7 @@
   const projectiles = [];
   const enemies = [];
   let player = null;
-  let centerX;
-  let centerY;
+  let centerX, centerY, animationFrame;
 
   let fps = 200;
   let now = null;
@@ -26,7 +25,7 @@
   };
 
   const playerSetup = (_e) => {
-    player = new Player(centerX, centerY, 20, 'aqua');
+    player = new Player(centerX, centerY, 15, '#fff');
     player.draw(ctx);
   };
 
@@ -37,29 +36,59 @@
     const angle = Math.atan2(distanceY, distanceX);
     const velocity = { x: Math.cos(angle), y: Math.sin(angle) };
 
-    const projectile = new Projectile(centerX, centerY, 5, 'red', velocity);
+    const projectile = new Projectile(centerX, centerY, 5, '#fff', velocity);
 
     projectiles.push(projectile);
   };
 
   const animate = () => {
-    requestAnimationFrame(animate);
-
+    animationFrame = requestAnimationFrame(animate);
     now = Date.now();
     delta = now - then;
 
     if (delta > interval) {
       then = now - (delta % interval);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, .1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       player.draw(ctx);
 
-      projectiles.forEach((projectile) => {
+      projectiles.forEach((projectile, i) => {
         projectile.updatePosition(ctx);
+
+        if (isProjectileOffScreen(projectile)) {
+          setTimeout(() => {
+            projectiles.splice(i, 1);
+          }, 0);
+        }
       });
 
-      enemies.forEach((enemy) => {
+      enemies.forEach((enemy, enemyIdx) => {
         enemy.updatePosition(ctx);
+
+        const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+
+        if (distance - enemy.radius - player.radius < 1) {
+          cancelAnimationFrame(animationFrame);
+        }
+
+        projectiles.forEach((projectile, projectileIdx) => handleCollision(projectile, projectileIdx, enemy, enemyIdx));
       });
+    }
+  };
+
+  const isProjectileOffScreen = ({ x, y, radius }) => {
+    return x + radius < 0 || x - radius > canvas.width || y + radius < 0 || y - radius > canvas.height;
+  };
+
+  const handleCollision = (projectile, projectileIdx, enemy, enemyIdx) => {
+    const distance = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
+
+    if (distance - enemy.radius - projectile.radius < 1) {
+      setTimeout(() => {
+        enemies.splice(enemyIdx, 1);
+        projectiles.splice(projectileIdx, 1);
+      }, 0);
     }
   };
 
@@ -67,8 +96,7 @@
     setInterval(() => {
       const radius = Math.random() * (25 - 5) + 5;
       const color = 'purple';
-      let x;
-      let y;
+      let x, y;
 
       if (Math.random() < 0.5) {
         x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius;
