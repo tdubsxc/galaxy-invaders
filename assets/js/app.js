@@ -34,7 +34,7 @@
     const distanceY = e.clientY - centerY;
 
     const angle = Math.atan2(distanceY, distanceX);
-    const velocity = { x: Math.cos(angle), y: Math.sin(angle) };
+    const velocity = { x: Math.cos(angle) * 4, y: Math.sin(angle) * 4 };
 
     const projectile = new Projectile(centerX, centerY, 5, '#fff', velocity);
 
@@ -85,17 +85,26 @@
     const distance = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
 
     if (distance - enemy.radius - projectile.radius < 1) {
-      setTimeout(() => {
-        enemies.splice(enemyIdx, 1);
-        projectiles.splice(projectileIdx, 1);
-      }, 0);
+      if (enemy.radius - 10 > 5) {
+        gsap.to(enemy, {
+          radius: enemy.radius - 10,
+        });
+        setTimeout(() => {
+          projectiles.splice(projectileIdx, 1);
+        }, 0);
+      } else {
+        setTimeout(() => {
+          enemies.splice(enemyIdx, 1);
+          projectiles.splice(projectileIdx, 1);
+        }, 0);
+      }
     }
   };
 
   const spawnEnemies = () => {
     setInterval(() => {
       const radius = Math.random() * (25 - 5) + 5;
-      const color = 'purple';
+      const color = `hsl(${Math.random() * 360}, 50%, 50%)`;
       let x, y;
 
       if (Math.random() < 0.5) {
@@ -112,7 +121,7 @@
       const enemy = new Enemy(x, y, radius, color, velocity);
 
       enemies.push(enemy);
-    }, 2000);
+    }, 1000);
   };
 
   animate();
@@ -159,6 +168,12 @@ class Projectile extends Circle {
 }
 
 class Enemy extends Projectile {
+  constructor(x, y, radius, color, velocity) {
+    super(x, y, radius, color, velocity);
+  }
+}
+
+class Particle extends Projectile {
   constructor(x, y, radius, color, velocity) {
     super(x, y, radius, color, velocity);
   }
