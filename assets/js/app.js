@@ -4,6 +4,7 @@
   const ctx = canvas.getContext('2d');
   const projectiles = [];
   const enemies = [];
+  const particles = [];
   let player = null;
   let centerX, centerY, animationFrame;
 
@@ -54,7 +55,7 @@
       player.draw(ctx);
 
       projectiles.forEach((projectile, i) => {
-        projectile.updatePosition(ctx);
+        projectile.updatePos(ctx);
 
         if (isProjectileOffScreen(projectile)) {
           setTimeout(() => {
@@ -64,30 +65,49 @@
       });
 
       enemies.forEach((enemy, enemyIdx) => {
-        enemy.updatePosition(ctx);
+        enemy.updatePos(ctx);
 
         const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
 
-        if (distance - enemy.radius - player.radius < 1) {
+        if (distance - enemy.size - player.size < 1) {
           cancelAnimationFrame(animationFrame);
         }
 
         projectiles.forEach((projectile, projectileIdx) => handleCollision(projectile, projectileIdx, enemy, enemyIdx));
       });
+
+      particles.forEach((particle, i) => {
+        if (particle.alpha <= 0) {
+          particles.splice(i, 1);
+        } else {
+          particle.updatePos(ctx);
+        }
+      });
     }
   };
 
-  const isProjectileOffScreen = ({ x, y, radius }) => {
-    return x + radius < 0 || x - radius > canvas.width || y + radius < 0 || y - radius > canvas.height;
+  const isProjectileOffScreen = ({ x, y, size }) => {
+    return x + size < 0 || x - size > canvas.width || y + size < 0 || y - size > canvas.height;
   };
 
   const handleCollision = (projectile, projectileIdx, enemy, enemyIdx) => {
     const distance = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
 
-    if (distance - enemy.radius - projectile.radius < 1) {
-      if (enemy.radius - 10 > 5) {
+    // when projectile hits enemy target
+    if (distance - enemy.size - projectile.size < 1) {
+      // create particle explosion on hit
+      for (let i = 0; i < enemy.size * 2; i++) {
+        const particle = new Particle(projectile.x, projectile.y, Math.random() * 2, enemy.color, {
+          x: (Math.random() - 0.5) * Math.random() * 4,
+          y: (Math.random() - 0.5) * Math.random() * 4,
+        });
+
+        particles.push(particle);
+      }
+
+      if (enemy.size - 10 > 5) {
         gsap.to(enemy, {
-          radius: enemy.radius - 10,
+          size: enemy.size - 10,
         });
         setTimeout(() => {
           projectiles.splice(projectileIdx, 1);
@@ -103,25 +123,25 @@
 
   const spawnEnemies = () => {
     setInterval(() => {
-      const radius = Math.random() * (25 - 5) + 5;
+      const size = Math.random() * (25 - 5) + 5;
       const color = `hsl(${Math.random() * 360}, 50%, 50%)`;
       let x, y;
 
       if (Math.random() < 0.5) {
-        x = Math.random() < 0.5 ? 0 - radius : canvas.width + radius;
+        x = Math.random() < 0.5 ? 0 - size : canvas.width + size;
         y = Math.random() * canvas.height;
       } else {
         x = Math.random() * canvas.width;
-        y = Math.random() < 0.5 ? 0 - radius : canvas.height + radius;
+        y = Math.random() < 0.5 ? 0 - size : canvas.height + size;
       }
 
       const angle = Math.atan2(centerY - y, centerX - x);
       const velocity = { x: Math.cos(angle), y: Math.sin(angle) };
 
-      const enemy = new Enemy(x, y, radius, color, velocity);
+      const enemy = new Enemy(x, y, size, color, velocity);
 
       enemies.push(enemy);
-    }, 1000);
+    }, 750);
   };
 
   animate();
@@ -133,34 +153,34 @@
 })();
 
 class Circle {
-  constructor(x, y, radius, color) {
+  constructor(x, y, size, color) {
     this.x = x;
     this.y = y;
-    this.radius = radius;
+    this.size = size;
     this.color = color;
   }
 
   draw(ctx) {
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
     ctx.fillStyle = this.color;
     ctx.fill();
   }
 }
 
 class Player extends Circle {
-  constructor(x, y, radius, color) {
-    super(x, y, radius, color);
+  constructor(x, y, size, color) {
+    super(x, y, size, color);
   }
 }
 
 class Projectile extends Circle {
-  constructor(x, y, radius, color, velocity) {
-    super(x, y, radius, color);
+  constructor(x, y, size, color, velocity) {
+    super(x, y, size, color);
     this.velocity = velocity;
   }
 
-  updatePosition(ctx) {
+  updatePos(ctx) {
     this.draw(ctx);
     this.x = this.x + this.velocity.x;
     this.y = this.y + this.velocity.y;
@@ -168,13 +188,31 @@ class Projectile extends Circle {
 }
 
 class Enemy extends Projectile {
-  constructor(x, y, radius, color, velocity) {
-    super(x, y, radius, color, velocity);
+  constructor(x, y, size, color, velocity) {
+    super(x, y, size, color, velocity);
   }
 }
 
 class Particle extends Projectile {
-  constructor(x, y, radius, color, velocity) {
-    super(x, y, radius, color, velocity);
+  constructor(x, y, size, color, velocity) {
+    super(x, y, size, color, velocity);
+    this.alpha = 1;
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.globalAlpha = this.alpha;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  updatePos(ctx) {
+    this.draw(ctx);
+    this.x = this.x + this.velocity.x;
+    this.y = this.y + this.velocity.y;
+    this.alpha -= 0.01;
   }
 }
