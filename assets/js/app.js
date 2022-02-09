@@ -2,9 +2,13 @@
   // * Variables
   const canvas = document.querySelector('canvas');
   const ctx = canvas.getContext('2d');
+  const scoreEl = document.querySelector('#score');
+  const startGameBtn = document.querySelector('#start-game-btn');
+  const modalBox = document.querySelector('#modal-box');
   const projectiles = [];
   const enemies = [];
   const particles = [];
+  let score = 0;
   let player = null;
   let centerX, centerY, animationFrame;
 
@@ -43,7 +47,7 @@
   };
 
   const animate = () => {
-    animationFrame = requestAnimationFrame(animate);
+    animationFrame = window.requestAnimationFrame(animate);
     now = Date.now();
     delta = now - then;
 
@@ -70,7 +74,7 @@
         const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
 
         if (distance - enemy.size - player.size < 1) {
-          cancelAnimationFrame(animationFrame);
+          window.cancelAnimationFrame(animationFrame);
         }
 
         projectiles.forEach((projectile, projectileIdx) => handleCollision(projectile, projectileIdx, enemy, enemyIdx));
@@ -95,11 +99,13 @@
 
     // when projectile hits enemy target
     if (distance - enemy.size - projectile.size < 1) {
+      score += 50;
+      scoreEl.textContent = score;
       // create particle explosion on hit
       for (let i = 0; i < enemy.size * 2; i++) {
         const particle = new Particle(projectile.x, projectile.y, Math.random() * 2, enemy.color, {
-          x: (Math.random() - 0.5) * Math.random() * 4,
-          y: (Math.random() - 0.5) * Math.random() * 4,
+          x: (Math.random() - 0.5) * Math.random() * 2,
+          y: (Math.random() - 0.5) * Math.random() * 2,
         });
 
         particles.push(particle);
@@ -109,11 +115,11 @@
         gsap.to(enemy, {
           size: enemy.size - 10,
         });
-        setTimeout(() => {
+        window.setTimeout(() => {
           projectiles.splice(projectileIdx, 1);
         }, 0);
       } else {
-        setTimeout(() => {
+        window.setTimeout(() => {
           enemies.splice(enemyIdx, 1);
           projectiles.splice(projectileIdx, 1);
         }, 0);
@@ -122,7 +128,7 @@
   };
 
   const spawnEnemies = () => {
-    setInterval(() => {
+    window.setInterval(() => {
       const size = Math.random() * (25 - 5) + 5;
       const color = `hsl(${Math.random() * 360}, 50%, 50%)`;
       let x, y;
@@ -148,8 +154,8 @@
   spawnEnemies();
 
   // * Events
-  addEventListener('DOMContentLoaded', init);
-  addEventListener('click', handleProjectiles);
+  window.addEventListener('DOMContentLoaded', init);
+  window.addEventListener('click', handleProjectiles);
 })();
 
 class Circle {
