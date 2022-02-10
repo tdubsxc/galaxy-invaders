@@ -5,12 +5,13 @@
   const scoreEl = document.querySelector('#score');
   const startGameBtn = document.querySelector('#start-game-btn');
   const modalBox = document.querySelector('#modal-box');
-  const projectiles = [];
-  const enemies = [];
-  const particles = [];
+  const modalScore = document.querySelector('#modal-score');
+
   let score = 0;
   let player = null;
-  let centerX, centerY, animationFrame;
+
+  let projectiles, enemies, particles;
+  let centerX, centerY, animationFrameId, spawnEnemiesIntervalId;
 
   let fps = 200;
   let now = null;
@@ -20,6 +21,14 @@
 
   // * Methods
   const init = () => {
+    projectiles = [];
+    enemies = [];
+    particles = [];
+    score = 0;
+
+    scoreEl.textContent = score;
+    modalScore.textContent = score;
+
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -29,7 +38,7 @@
     playerSetup();
   };
 
-  const playerSetup = (_e) => {
+  const playerSetup = () => {
     player = new Player(centerX, centerY, 15, '#fff');
     player.draw(ctx);
   };
@@ -47,14 +56,15 @@
   };
 
   const animate = () => {
-    animationFrame = window.requestAnimationFrame(animate);
+    animationFrameId = window.requestAnimationFrame(animate);
+
     now = Date.now();
     delta = now - then;
 
     if (delta > interval) {
       then = now - (delta % interval);
 
-      ctx.fillStyle = 'rgba(0, 0, 0, .1)';
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       player.draw(ctx);
 
@@ -73,8 +83,11 @@
 
         const distance = Math.hypot(player.x - enemy.x, player.y - enemy.y);
 
+        // game over
         if (distance - enemy.size - player.size < 1) {
-          window.cancelAnimationFrame(animationFrame);
+          window.cancelAnimationFrame(animationFrameId);
+          window.clearInterval(spawnEnemiesIntervalId);
+          showEndGameModal();
         }
 
         projectiles.forEach((projectile, projectileIdx) => handleCollision(projectile, projectileIdx, enemy, enemyIdx));
@@ -100,7 +113,7 @@
     // when projectile hits enemy target
     if (distance - enemy.size - projectile.size < 1) {
       score += 50;
-      scoreEl.textContent = score;
+      scoreEl.textContent = formatNumWithCommas(score);
       // create particle explosion on hit
       for (let i = 0; i < enemy.size * 2; i++) {
         const particle = new Particle(projectile.x, projectile.y, Math.random() * 2, enemy.color, {
@@ -128,7 +141,7 @@
   };
 
   const spawnEnemies = () => {
-    window.setInterval(() => {
+    spawnEnemiesIntervalId = window.setInterval(() => {
       const size = Math.random() * (25 - 5) + 5;
       const color = `hsl(${Math.random() * 360}, 50%, 50%)`;
       let x, y;
@@ -150,12 +163,24 @@
     }, 750);
   };
 
-  animate();
-  spawnEnemies();
+  const showEndGameModal = () => {
+    modalBox.style.display = 'flex';
+    modalScore.textContent = formatNumWithCommas(score);
+  };
+
+  function formatNumWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
 
   // * Events
-  window.addEventListener('DOMContentLoaded', init);
   window.addEventListener('click', handleProjectiles);
+  startGameBtn.addEventListener('click', () => {
+    init();
+    animate();
+    spawnEnemies();
+
+    modalBox.style.display = 'none';
+  });
 })();
 
 class Circle {
@@ -188,8 +213,8 @@ class Projectile extends Circle {
 
   updatePos(ctx) {
     this.draw(ctx);
-    this.x = this.x + this.velocity.x;
-    this.y = this.y + this.velocity.y;
+    this.x += this.velocity.x;
+    this.y += this.velocity.y;
   }
 }
 
@@ -217,8 +242,8 @@ class Particle extends Projectile {
 
   updatePos(ctx) {
     this.draw(ctx);
-    this.x = this.x + this.velocity.x;
-    this.y = this.y + this.velocity.y;
+    this.x += this.velocity.x;
+    this.y += this.velocity.y;
     this.alpha -= 0.01;
   }
 }
