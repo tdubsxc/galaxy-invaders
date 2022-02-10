@@ -6,13 +6,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Galaxy Invaders</title>
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;700&family=Roboto:wght@300;400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
   </head>
-  <body>
-    <canvas></canvas>
+  <body class="font-body">
     <div class="absolute top-0 left-0 text-white ml-2 mt-1 select-none">
-      <span>Score: </span>
-      <span id="score">0</span>
+      <div>
+        <span>Your score: </span>
+        <span id="score">0</span>
+      </div>
+      <span>High score: </span>
+      <span id="high-score">0</span>
     </div>
+    <div id="modal-box" class="fixed inset-0 flex flex-col justify-center items-center">
+      <div class="bg-white w-full max-w-sm rounded shadow-xl px-5 py-10 text-center">
+        <h1 id="modal-score" class="font-medium text-6xl my-2">0</h1>
+        <p>Points</p>
+        <div class="mt-4">
+          <button id="start-game-btn" class="btn w-3/5 text-md text-white bg-blue-500 hover:bg-blue-700">
+            Start Game
+          </button>
+        </div>
+      </div>
+    </div>
+    <canvas></canvas>
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"
       integrity="sha512-H6cPm97FAsgIKmlBA4s774vqoN24V5gSQL4yBTDOY2su2DeXZVhQPxFK4P6GPdnZqM9fg1G3cMv5wD7e6cFLZQ=="
