@@ -4,10 +4,13 @@
   const ctx = canvas.getContext('2d');
   const scoreEl = document.querySelector('#score');
   const startGameBtn = document.querySelector('#start-game-btn');
-  const modalBox = document.querySelector('#modal-box');
+  const modalContainer = document.querySelector('#modal-container');
+  const congratsMsg = document.querySelector('#congrats');
   const modalScore = document.querySelector('#modal-score');
+  const highScoreEl = document.querySelector('#high-score');
 
   let score = 0;
+  let highScore = 0;
   let player = null;
 
   let projectiles, enemies, particles;
@@ -35,6 +38,7 @@
     centerX = canvas.width / 2;
     centerY = canvas.height / 2;
 
+    getHighScore();
     playerSetup();
   };
 
@@ -88,6 +92,7 @@
           window.cancelAnimationFrame(animationFrameId);
           window.clearInterval(spawnEnemiesIntervalId);
           showEndGameModal();
+          checkHighScore();
         }
 
         projectiles.forEach((projectile, projectileIdx) => handleCollision(projectile, projectileIdx, enemy, enemyIdx));
@@ -109,11 +114,8 @@
 
   const handleCollision = (projectile, projectileIdx, enemy, enemyIdx) => {
     const distance = Math.hypot(projectile.x - enemy.x, projectile.y - enemy.y);
-
     // when projectile hits enemy target
     if (distance - enemy.size - projectile.size < 1) {
-      score += 50;
-      scoreEl.textContent = formatNumWithCommas(score);
       // create particle explosion on hit
       for (let i = 0; i < enemy.size * 2; i++) {
         const particle = new Particle(projectile.x, projectile.y, Math.random() * 2, enemy.color, {
@@ -125,6 +127,9 @@
       }
 
       if (enemy.size - 10 > 5) {
+        score += 50;
+        scoreEl.textContent = formatNumWithCommas(score);
+
         gsap.to(enemy, {
           size: enemy.size - 10,
         });
@@ -132,6 +137,9 @@
           projectiles.splice(projectileIdx, 1);
         }, 0);
       } else {
+        score += 100;
+        scoreEl.textContent = formatNumWithCommas(score);
+
         window.setTimeout(() => {
           enemies.splice(enemyIdx, 1);
           projectiles.splice(projectileIdx, 1);
@@ -160,26 +168,43 @@
       const enemy = new Enemy(x, y, size, color, velocity);
 
       enemies.push(enemy);
-    }, 750);
+    }, 1000);
   };
 
   const showEndGameModal = () => {
-    modalBox.style.display = 'flex';
+    modalContainer.style.display = 'flex';
     modalScore.textContent = formatNumWithCommas(score);
   };
 
-  function formatNumWithCommas(x) {
+  const formatNumWithCommas = (x) => {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  }
+  };
+
+  const checkHighScore = () => {
+    if (score > highScore) {
+      highScore = score;
+      congratsMsg.style.display = 'block';
+      highScoreEl.textContent = formatNumWithCommas(highScore);
+      localStorage.setItem('highScore', highScore);
+    } else {
+      congratsMsg.style.display = 'none';
+    }
+  };
+
+  const getHighScore = (_e) => {
+    highScore = localStorage.getItem('highScore');
+    highScore ? (highScoreEl.textContent = formatNumWithCommas(highScore)) : (highScoreEl.textContent = 0);
+  };
 
   // * Events
+  window.addEventListener('DOMContentLoaded', getHighScore);
   window.addEventListener('click', handleProjectiles);
   startGameBtn.addEventListener('click', () => {
     init();
     animate();
     spawnEnemies();
 
-    modalBox.style.display = 'none';
+    modalContainer.style.display = 'none';
   });
 })();
 

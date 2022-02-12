@@ -14,21 +14,25 @@
     />
   </head>
   <body class="font-body">
-    <div class="absolute top-0 left-0 text-white ml-2 mt-1 select-none">
+    <div class="absolute top-0 left-0 text-white ml-3 mt-3 select-none">
       <div>
         <span>Your score: </span>
         <span id="score">0</span>
       </div>
       <span>High score: </span>
-      <span id="high-score">0</span>
+      <span id="high-score"></span>
     </div>
-    <div id="modal-box" class="fixed inset-0 flex flex-col justify-center items-center">
-      <div class="bg-white w-full max-w-sm rounded shadow-xl px-5 py-10 text-center">
-        <h1 id="modal-score" class="font-medium text-6xl my-2">0</h1>
-        <p>Points</p>
+    <div id="modal-container" class="fixed inset-0 flex flex-col justify-center items-center">
+      <div id="modal-inner" class="bg-white w-full max-w-sm rounded shadow-xl px-2 py-10 text-center select-none">
+        <div id="congrats" class="hidden mb-4">
+          <h3 class="text-2xl mb-2">Congratulations!</h3>
+          <p class="text-md capitalize">🏆 New high score alert 🏆</p>
+        </div>
+        <h1 id="modal-score" class="font-medium text-7xl my-2">0</h1>
+        <p id="points-text">Points</p>
         <div class="mt-4">
-          <button id="start-game-btn" class="btn w-3/5 text-md text-white bg-blue-500 hover:bg-blue-700">
-            Start Game
+          <button id="start-game-btn" class="btn w-3/5 text-md text-white capitalize bg-blue-500 hover:bg-blue-700">
+            Start game
           </button>
         </div>
       </div>
